@@ -1,102 +1,161 @@
+// Include important C++ libraries here
 #include <SFML/Graphics.hpp>
-#include <sstream> //standrard in/op librery
-
+#include <sstream>
+#include<SFML/Audio.hpp>
+// Make code easier to type with "using namespace"
 using namespace sf;
-// function declaration
+//Function declaration
 void updateBranches(int seed);
 
-const int NUM_BRANCHES = 6;
+const int NUM_BRANCHES=6;
 Sprite branches[NUM_BRANCHES];
 
-// position of branches left or right
-enum class side
-{
-    LEFT,
-    RIGHT,
-    NONE
-};
+//position of branches,left or right
+enum class side{LEFT,RIGHT,NONE};
 side branchPosition[NUM_BRANCHES];
-
 int main()
 {
-    srand(time(0)); // Seed random once at the beginning
+	// Create a video mode object
+	// VideoMode vm(1920, 1080);
 
-    VideoMode vm(1920, 1080);
-    RenderWindow window(vm, "timber");
+	// Low res code
+	VideoMode vm(960, 540);
 
-    Texture backgroundTexture;
-    backgroundTexture.loadFromFile("graphics/background.png");
-    Sprite backgroundSprite;
-    backgroundSprite.setTexture(backgroundTexture);
-    backgroundSprite.setPosition(-100, -250);
+	// Create and open a window for the game
+	// RenderWindow window(vm, "Timber!!!", Style::Fullscreen);
 
-    // Cloud texture
-    Texture cloudTexture;
-    cloudTexture.loadFromFile("graphics/cloud.png");
-    Sprite cloudSprite1, cloudSprite2, cloudSprite3;
-    cloudSprite1.setTexture(cloudTexture);
-    cloudSprite1.setPosition(100, 50);
-    cloudSprite1.scale(0.5f, 0.5f);
+	// Low res code
+	RenderWindow window(vm, "Timber!!!");
+	View view(sf::FloatRect(0, 0, 1920, 1080));
+	window.setView(view);
+	//End of low res code!! Everything else is the same!!
 
-    cloudSprite2.setTexture(cloudTexture);
-    cloudSprite2.setPosition(800, 50);
-    cloudSprite2.scale(0.5f, 0.5f);
+	// Create a texture to hold a graphic on the GPU
+	Texture textureBackground;
 
-    cloudSprite3.setTexture(cloudTexture);
-    cloudSprite3.setPosition(300, 50);
-    cloudSprite3.scale(0.5f, 0.5f);
+	// Load a graphic into the texture
+	textureBackground.loadFromFile("graphics/background.png");
 
-    bool cloudActive1 = false, cloudActive2 = false, cloudActive3 = false;
-    float cloudSpeed1 = 0.0f, cloudSpeed2 = 0.0f, cloudSpeed3 = 0.0f;
-    Clock cloudClock1, cloudClock2, cloudClock3;
+	// Create a sprite
+	Sprite spriteBackground;
 
-    // Tree texture
-    Texture treeTexture;
-    treeTexture.loadFromFile("graphics/tree.png");
-    Sprite treeSprite;
-    treeSprite.setTexture(treeTexture);
-    treeSprite.setPosition(570, 0);
-    treeSprite.scale(0.5f, 1);
+	// Attach the texture to the sprite
+	spriteBackground.setTexture(textureBackground);
 
-    // Bee texture
-    Texture beeTexture;
-    beeTexture.loadFromFile("graphics/bee.png");
-    Sprite beeSprite;
-    beeSprite.setTexture(beeTexture);
-    beeSprite.setPosition(200, 400);
+	// Set the spriteBackground to cover the screen
+	spriteBackground.setPosition(0, 0);
 
-    bool beeActive = false;
-    float beeSpeed = 0.0f;
-    float beeHeight = 0.0f;
+	// Make a tree sprite
+	Texture textureTree;
+	textureTree.loadFromFile("graphics/tree.png");
+	Sprite spriteTree;
+	spriteTree.setTexture(textureTree);
+	spriteTree.setPosition(810, 0);
 
-    //load the playes
-    Texture textureplayer;
-    textureplayer.loadFromFile("graphics/player.png");
-    Sprite spriteplayer;
-    spriteplayer.setTexture(textureplayer);
-    spriteplayer.setPosition(500,720);
+	// Prepare the bee
+	Texture textureBee;
+	textureBee.loadFromFile("graphics/bee.png");
+	Sprite spriteBee;
+	spriteBee.setTexture(textureBee);
+	spriteBee.setPosition(0, 800);
 
-    Texture texturerip;
-    texturerip.loadFromFile("graphics/rip.png");
-    Sprite spriterip;
-    spriterip.setTexture(texturerip);
-    spriterip.setPosition(600,800);
+	// Is the bee currently moving?
+	bool beeActive = false;
 
-    Texture textureaxe;
-    textureaxe.loadFromFile("graphics/axe.png");
-    Sprite spriteaxe;
-    spriteaxe.setTexture(textureaxe);
-    spriteaxe.setPosition(700,630);
+	// How fast can the bee fly
+	float beeSpeed = 0.0f;
+	
+	Texture texturePlayer;
+	texturePlayer.loadFromFile("graphics/player.png");
+	Sprite spritePlayer;
+	spritePlayer.setTexture(texturePlayer);
+	spritePlayer.setPosition(580,720);
 
-    Texture texturelog;
-    texturelog.loadFromFile("graphics/log.png");
-    Sprite spritelog;
-    spritelog.setTexture(texturelog);
-    spritelog.setPosition(100,0);
+	//Player starts on left
+	side playerSide=side::LEFT;
 
-    Clock clock;
+    //sound
+    SoundBuffer chopBuffer;
+    chopBuffer.loadFromFile("sound/chop.wav");
+    Sound chop;
+    chop.setBuffer(chopBuffer);
+    SoundBuffer deathBuffer;
+    chopBuffer.loadFromFile("sound/death.wav");
+    Sound death;
+    death.setBuffer(deathBuffer);
+    SoundBuffer out_of_timeBuffer;
+    out_of_timeBuffer.loadFromFile("sound/out_of_time.wav");
+    Sound out_of_time;
+    out_of_time.setBuffer(chopBuffer);
 
-    // Time Bar
+
+	//control the player input
+	bool acceptInput=false;
+
+
+	//add gravestone
+	Texture textureRIP;
+	textureRIP.loadFromFile("graphics/rip.png");
+	Sprite spriteRIP;
+	spriteRIP.setTexture(textureRIP);
+	spriteRIP.setPosition(600,860);
+
+	//add axe
+	Texture textureAxe;
+	textureAxe.loadFromFile("graphics/axe.png");
+	Sprite spriteAxe;
+	spriteAxe.setTexture(textureAxe);
+	spriteAxe.setPosition(700,830);
+
+	//line the axe up with the tree
+	const float AXE_POSITION_LEFT=700;
+	const float AXE_POSITION_RIGHT=1075;
+
+	//add log
+	Texture textureLog;
+	textureLog.loadFromFile("graphics/log.png");
+	Sprite spriteLog;
+	spriteLog.setTexture(textureLog);
+	spriteLog.setPosition(810,720);
+
+	//some other useful log realted variables
+	bool logActive=false;
+	float logSpeedX=1000;
+	float logSpeedY=-1500;// when player moves from left to right and bottom to top,x increase and y decrease
+
+	// make 3 cloud sprites from 1 texture
+	Texture textureCloud;
+
+	// Load 1 new texture
+	textureCloud.loadFromFile("graphics/cloud.png");
+
+	// 3 New sprites withe the same texture
+	Sprite spriteCloud1;
+	Sprite spriteCloud2;
+	Sprite spriteCloud3;
+	spriteCloud1.setTexture(textureCloud);
+	spriteCloud2.setTexture(textureCloud);
+	spriteCloud3.setTexture(textureCloud);
+
+	// Position the clouds off screen
+	spriteCloud1.setPosition(0, 0);
+	spriteCloud2.setPosition(0, 150);
+	spriteCloud3.setPosition(0, 300);
+
+	// Are the clouds currently on screen?
+	bool cloud1Active = false;
+	bool cloud2Active = false;
+	bool cloud3Active = false;
+
+	// How fast is each cloud?
+	float cloud1Speed = 0.0f;
+	float cloud2Speed = 0.0f;
+	float cloud3Speed = 0.0f;
+
+	// Variables to control time itself
+	Clock clock;
+
+	// Time Bar
     RectangleShape timeBar;
     float timeBarStartWidth = 400;
     float timeBarHeight = 40;
@@ -104,237 +163,400 @@ int main()
     timeBar.setFillColor(Color::Red);
     timeBar.setPosition((1250 / 2) - timeBarStartWidth / 2, 600);
 
-    float timeRemaining = 6.0f;
+    float timeRemaining = 8.0f;
     float timeBarWidthPerSecond = timeBarStartWidth / timeRemaining;
 
     bool paused = true;
-    // Draw score
-    int score = 0;
-    sf::Text messageText;
-    sf::Text scoreText;
 
-    // we ne to choose a font from file
-    sf::Font font;
-    font.loadFromFile("fonts/KOMIKAP_.ttf");
+	int score=0;
+	sf::Text scoreText;
+	sf::Text messageText;
+	sf::Font font;
+	font.loadFromFile("fonts/KOMIKAP_.ttf");
+	
+	//set the font to the msg
+	scoreText.setFont(font);
+	messageText.setFont(font);
 
-    // set the font to our message
-    messageText.setFont(font);
-    scoreText.setFont(font);
+	//set the specific msg
+	scoreText.setString("score=0");
+	messageText.setString("Press Enter to Start!!!");
 
-    // set specific message
-    messageText.setString("press enter to Start");
-    scoreText.setString("score=0");
+	//set size
+	scoreText.setCharacterSize(100);
+	messageText.setCharacterSize(200);
 
-    // set the character size
-    messageText.setCharacterSize(200);
-    scoreText.setCharacterSize(100);
-    // set colour
-    messageText.setFillColor(Color::White);
-    scoreText.setFillColor(Color::White);
-    // set position
-    scoreText.setPosition(20, 20);
-    messageText.setString("out of Time!!");
-    FloatRect textRect = messageText.getLocalBounds();
-    messageText.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
-    messageText.setPosition(1920 / 2.0f, 1080 / 2.0f);
+	//set color
+	scoreText.setFillColor(Color::White);
+	messageText.setFillColor(Color::White);
 
-    // create 5 branches
-    Texture textureBranch;
-    textureBranch.loadFromFile("graphics/branch.png");
+	//set position
+	scoreText.setPosition(20,20);
+	FloatRect textRect=messageText.getLocalBounds();
+	messageText.setOrigin(textRect.left+ textRect.width/2.0f,textRect.top+ textRect.height/2.0f);
+	messageText.setPosition(1920/2.0f,1080/2.0f);
 
-    // set the texture for each branch sprite
-    for (int i = 0; i < NUM_BRANCHES; i++)
-    {
-        branches[i].setTexture(textureBranch);
-        branches[i].setPosition(-2000, -2000);
+	// create 5 branches
+	Texture textureBranch;
 
-        // set the sprite origin to create
-        branches[i].setOrigin(220, 20);
-    }
-    updateBranches(1);
-    updateBranches(2);
-    updateBranches(3);
-    updateBranches(4);
-    updateBranches(5);
-    updateBranches(6);
+	textureBranch.loadFromFile("graphics/branch.png");
+	
+	//set the texture for each branch sprite
+	for(int i=0;i<NUM_BRANCHES;i++){
+		branches[i].setTexture(textureBranch);
+		branches[i].setPosition(-2000,-2000);
 
-    while (window.isOpen())
-    {
-        if (Keyboard::isKeyPressed(Keyboard::Return))
-        {
+		//set the sprite origin to centre
+		branches[i].setOrigin(220,20);
+	}
+	updateBranches(1);
+	updateBranches(2);
+	updateBranches(3);
+	updateBranches(4);
+	updateBranches(5);
+	
+	//main loop
+	while (window.isOpen())
+	{		
+		Event event;
+		while(window.pollEvent(event)){
+			if(event.type==Event::KeyReleased && !paused){
+				acceptInput=true;
+
+				spriteAxe.setPosition(2000,spriteAxe.getPosition().y);
+			}
+		}
+
+		if (Keyboard::isKeyPressed(Keyboard::Return)) {
             paused = false;
-            // reset time and score
-            score = 0;
-            timeRemaining = 6.0f;
-        }
+			//reset the time and score
+			score=0;
+			timeRemaining=6;
+			
+			for(int i=1;i<NUM_BRANCHES;i++){ //disable all branches
+				branchPosition[i]=side::NONE;
+			}
 
-        if (!paused)
-        {
+			//make the gravestone hidden
+			spriteRIP.setPosition(675,2000);
+
+			//move the player into left position
+			spritePlayer.setPosition(580,720);
+
+			acceptInput=true;
+        }
+		if(acceptInput){
+			if(Keyboard::isKeyPressed(Keyboard::Right)){
+				playerSide=side::RIGHT;//makesure the player is on the right
+
+				score++;
+
+				//add the amount to the time remaining
+				timeRemaining += (2/score) + 15;
+
+				//set axe position
+				spriteAxe.setPosition(AXE_POSITION_RIGHT,spriteAxe.getPosition().y);
+
+				//set player position
+				spritePlayer.setPosition(1200,720);
+
+				updateBranches(score);
+
+				//set the log flying to the left
+				spriteLog.setPosition(810,720);
+				logSpeedX=-5000;
+				logActive=true;
+
+				acceptInput=false;
+
+				//play a chop sound
+                
+			}
+			if(Keyboard::isKeyPressed(Keyboard::Left)){
+				playerSide=side::LEFT;//makesure the player is on the right
+
+				score++;
+
+				//add the amount to the time remaining
+				timeRemaining += (2/score) + 15;
+
+				//set axe position
+				spriteAxe.setPosition(AXE_POSITION_LEFT,spriteAxe.getPosition().y);
+
+				//set player position
+				spritePlayer.setPosition(580,720);
+
+				updateBranches(score);
+
+				//set the log flying to the left
+				spriteLog.setPosition(810,720);
+				logSpeedX=5000;
+				logActive=true;
+
+				acceptInput=false;
+
+				//play a chop sound
+			}
+		}
+		if (!paused) {
             Time dt = clock.restart();
             timeRemaining -= dt.asSeconds();
             timeBar.setSize(Vector2f(timeBarWidthPerSecond * timeRemaining, timeBarHeight));
 
-            if (timeRemaining <= 0.0f)
-            {
-                paused = true;
-                messageText.setString("game over");
-                FloatRect textRect = messageText.getLocalBounds();
-                messageText.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
-                messageText.setPosition(1920 / 2.0f, 1080 / 2.0f);
-            }
+            if (timeRemaining < 0.0f) {
+				paused = true;
+				//change the messgae shown to player
+				messageText.setString("Out of Time!!");
 
-            // Cloud 1 movement
-            if (!cloudActive1)
-            {
-                cloudSpeed1 = (rand() % 100) + 100;
-                cloudSprite1.setPosition(-100, (rand() % 50) + 100);
-                cloudActive1 = true;
+				FloatRect textRect=messageText.getLocalBounds();
+				messageText.setOrigin(textRect.left+ textRect.width/2.0f,
+				textRect.top+ textRect.height/2.0f);
+				messageText.setPosition(1920/2.0f,1080/2.0f);
+                
             }
-            else
-            {
-                cloudSprite1.move(cloudSpeed1 * dt.asSeconds(), 0);
-                if (cloudSprite1.getPosition().x > 2000)
-                {
-                    cloudActive1 = false;
-                }
-            }
+		
+		if (Keyboard::isKeyPressed(Keyboard::Escape))
+		{
+			
+			window.close();
+		}
 
-            // Cloud 2 movement
-            if (!cloudActive2)
-            {
-                cloudSpeed2 = (rand() % 100) + 100;
-                cloudSprite2.setPosition(-500, (rand() % 50) + 100);
-            }
-            else
-            {
-                cloudSprite2.move(cloudSpeed2 * dt.asSeconds(), 0);
-                if (cloudSprite2.getPosition().x > 2000)
-                {
-                    cloudActive2 = false;
-                }
-            }
+		/*/home/student/Desktop/gpwc_2241004021/Project1 (1)/graphics/branch.png
+		*/
+		// Measure time
+		//Time dt = clock.restart();
 
-            // Cloud 3 movement
-            if (!cloudActive3)
-            {
-                cloudSpeed3 = (rand() % 100) + 100;
-                cloudSprite3.setPosition(-50, (rand() % 50) + 50);
-                cloudActive3 = true;
-            }
-            else
-            {
-                cloudSprite3.move(cloudSpeed3 * dt.asSeconds(), 0);
-                if (cloudSprite3.getPosition().x > 2000)
-                {
-                    cloudActive3 = false;
-                }
-            }
+		// Setup the bee
+		if (!beeActive)
+		{
 
-            // Bee movement
-            if (!beeActive)
-            {
-                beeSpeed = (rand() % 200) + 200;
-                beeHeight = (rand() % 500) + 500;
-                beeSprite.setPosition(2000, beeHeight);
-                beeActive = true;
-            }
-            else
-            {
-                beeSprite.move(-beeSpeed * dt.asSeconds(), 0);
-                if (beeSprite.getPosition().x < -100)
-                {
-                    beeActive = false;
-                }
-            }
-            // update the score
-            std::stringstream ss;
-            ss << "Score: " << score;
-            scoreText.setString(ss.str());
+			// How fast is the bee
+			srand((int)time(0) * 10);
+			beeSpeed = (rand() % 200) + 200;
+			
+			// How high is the bee
+			srand((int)time(0) * 10);
+			float height = (rand() % 500) + 500;
+			spriteBee.setPosition(2000, height);
+			beeActive = true;
 
-            // update the branch
-            for (int i = 0; i < NUM_BRANCHES; i++)
-            {
-                float height = i * 150;
-                if (branchPosition[i] == side::LEFT)
-                {
+		}
+		else
+			// Move the bee
+		{
 
-                    // move the sprite to left
-                    branches[i].setPosition(350, height);
-                    branches[i].setRotation(180);
-                }
-                else if (branchPosition[i] == side::RIGHT)
-                {
+			spriteBee.setPosition(
+				spriteBee.getPosition().x -
+				(beeSpeed * dt.asSeconds()),
+				spriteBee.getPosition().y);
 
-                    // move the sprite to right
-                    branches[i].setPosition(920, height);
-                    branches[i].setRotation(0);
-                }
-                else
-                {
-                    // hide the branch
-                    branches[i].setPosition(3000, height);
-                }
-            }
-            updateBranches(1);
-            updateBranches(2);
-            updateBranches(3);
-            updateBranches(4);
-            updateBranches(5);
-            updateBranches(6);
+			// Has the bee reached the right hand edge of the screen?
+			if (spriteBee.getPosition().x < -100)
+			{
+				// Set it up ready to be a whole new cloud next frame
+				beeActive = false;
+			}
+		}
+
+		// Manage the clouds
+		// Cloud 1
+		if (!cloud1Active)
+		{
+
+			// How fast is the cloud
+			srand((int)time(0) * 10);
+			cloud1Speed = (rand() % 200);
+
+			// How high is the cloud
+			srand((int)time(0) * 10);
+			float height = (rand() % 150);
+			spriteCloud1.setPosition(-200, height);
+			cloud1Active = true;
+
+
+		}
+		else
+		{
+
+			spriteCloud1.setPosition(
+				spriteCloud1.getPosition().x +
+				(cloud1Speed * dt.asSeconds()),
+				spriteCloud1.getPosition().y);
+
+			// Has the cloud reached the right hand edge of the screen?
+			if (spriteCloud1.getPosition().x > 1920)
+			{
+				// Set it up ready to be a whole new cloud next frame
+				cloud1Active = false;
+			}
+		}
+		// Cloud 2
+		if (!cloud2Active)
+		{
+
+			// How fast is the cloud
+			srand((int)time(0) * 20);
+			cloud2Speed = (rand() % 200);
+
+			// How high is the cloud
+			srand((int)time(0) * 20);
+			float height = (rand() % 300) - 150;
+			spriteCloud2.setPosition(-200, height);
+			cloud2Active = true;
+
+
+		}
+		else
+		{
+
+			spriteCloud2.setPosition(
+				spriteCloud2.getPosition().x +
+				(cloud2Speed * dt.asSeconds()),
+				spriteCloud2.getPosition().y);
+
+			// Has the cloud reached the right hand edge of the screen?
+			if (spriteCloud2.getPosition().x > 1920)
+			{
+				// Set it up ready to be a whole new cloud next frame
+				cloud2Active = false;
+			}
+		}
+
+		if (!cloud3Active)
+		{
+
+			// How fast is the cloud
+			srand((int)time(0) * 30);
+			cloud3Speed = (rand() % 200);
+
+			// How high is the cloud
+			srand((int)time(0) * 30);
+			float height = (rand() % 450) - 150;
+			spriteCloud3.setPosition(-200, height);
+			cloud3Active = true;
+
+
+		}
+		else
+		{
+
+			spriteCloud3.setPosition(
+				spriteCloud3.getPosition().x +
+				(cloud3Speed * dt.asSeconds()),
+				spriteCloud3.getPosition().y);
+
+			// Has the cloud reached the right hand edge of the screen?
+			if (spriteCloud3.getPosition().x > 1920)
+			{
+				// Set it up ready to be a whole new cloud next frame
+				cloud3Active = false;
+			}
+		}
+
+		std::stringstream ss;
+		ss<<"score="<<score;
+		scoreText.setString(ss.str());
+
+		//update the branch sprite
+		for(int i=0;i<NUM_BRANCHES;i++){
+			float height=i*150;
+			if(branchPosition[i]==side::LEFT)
+			{	//move the sprite to the left
+				branches[i].setPosition(600,height);
+				branches[i].setRotation(180);
+			}
+			else if(branchPosition[i]==side::RIGHT)
+			{
+				branches[i].setPosition(1330,height);
+				branches[i].setRotation(0);	
+			}
+			else
+			{	//hide the branch
+				branches[i].setPosition(3000,height);
+			}
+		}
+        //handle the log flying
+        if(logActive){
+            spriteLog.setPosition(spriteLog.getPosition().x+(logSpeedX*dt.asSeconds()),spriteLog.getPosition().y+(logSpeedY*dt.asSeconds()));
         }
-
-        // Clear window
-        window.clear();
-
-        if (Keyboard::isKeyPressed(Keyboard::Escape))
-        {
-            window.close();
+        if(spriteLog.getPosition().x<-100 || spriteLog.getPosition().x>2000){
+            logActive=false;
+            spriteLog.setPosition(810,720);
         }
+        //has a player squished by a branch
+        if(branchPosition[5]==playerSide){
+            paused=true;
+            acceptInput=false;
+            spriteRIP.setPosition(525,760);
+            spritePlayer.setPosition(2000,600);
+            messageText.setString("SQUISHED!");
+            FloatRect textRect=messageText.getLocalBounds();
+            messageText.setOrigin(textRect.left+textRect.width/2.0f,textRect.top+textRect.height/2.0f);
+            messageText.setPosition(1920/2,1080/2);
 
-        // Display elements
-        window.draw(backgroundSprite);
-        window.draw(cloudSprite1);
-        window.draw(cloudSprite2);
-        window.draw(cloudSprite3);
-        // draw the branches
-        for (int i = 0; i < NUM_BRANCHES; i++)
-        {
-            window.draw(branches[i]);
         }
-        window.draw(treeSprite);
-        window.draw(beeSprite);
-        window.draw(scoreText);
-        window.draw(timeBar);
-        if (paused)
-        {
-            window.draw(messageText);
-        }
-        window.display();
-    }
+        //play sound
+        
 
-    return 0;
+	}
+		/*
+		****************************************
+		Draw the scene
+		****************************************
+		*/
+
+		// Clear everything from the last frame
+		window.clear();
+
+		// Draw our game scene here
+		window.draw(spriteBackground);
+
+		// Draw the clouds
+		window.draw(spriteCloud1);
+		window.draw(spriteCloud2);
+		window.draw(spriteCloud3);
+		for(int i=0;i<NUM_BRANCHES;i++){
+			window.draw(branches[i]);
+		}
+		window.draw(spriteTree);
+		window.draw(spritePlayer);
+		window.draw(spriteAxe);
+		window.draw(spriteLog);
+		window.draw(spriteRIP);
+		window.draw(spriteBee);
+		window.draw(scoreText);
+		window.draw(timeBar);
+		if(paused){
+			window.draw(messageText);
+		}
+		
+		window.display();
+
+
+		
 }
-void updateBranches(int seed)
-{
-    // move the branches down one place
-    for (int j = NUM_BRANCHES; j > 0; j--)
-    {
-        branchPosition[j] = branchPosition[j - 1];
-        // position left,right,none
-        srand((int)time(0) + seed);
-        int r = {rand() % 5};
-        switch (r)
-        {
-        case 0:
-            branchPosition[0] = side::LEFT;
-            break;
-        case 1:
-            branchPosition[0] = side::RIGHT;
-            break;
-
-        default:
-            branchPosition[0] = side::NONE;
-            break;
-        }
-    }
+		return 0;
 }
+//function definition
+void updateBranches(int seed){
+	//move the branches down one place
+	for(int j=NUM_BRANCHES-1;j>0;j--){
+		branchPosition[j]=branchPosition[j-1];
+	}
+		//position LEFT,RIGHT or NONE
+		srand((int)time(0)+seed);
+		int r=(rand()%5);
+		switch(r){
+			case 0:
+				branchPosition[0]=side::LEFT;
+				break;
+			case 1:
+				branchPosition[0]=side::RIGHT;
+				break;
+			default:
+				branchPosition[0]=side::NONE;
+				break;
+		}
+	
+}
+
